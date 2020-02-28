@@ -46,22 +46,23 @@ class UserControllerTest extends AbstractControllerTest {
 
     @BeforeAll
     public void insertData() {
-        Session session = entityManager.getEntityManagerFactory().createEntityManager().unwrap(Session.class);
-        Transaction tx = session.beginTransaction();
-        session.createNativeQuery("CREATE TABLE users (\n" +
-                "\tid varchar(6),\n" +
-                "\tuser_type varchar(6),\n" +
-                "\tblack_list boolean\n" +
-                ")").executeUpdate();
-        // for load testing
-        IntStream.range(1000, 2000).forEach(value -> executeInsertQuery(session, "ID" + value, UserType.FL, true));
+        try (Session session = entityManager.getEntityManagerFactory().createEntityManager().unwrap(Session.class)) {
+            Transaction tx = session.beginTransaction();
+            session.createNativeQuery("CREATE TABLE users (\n" +
+                    "\tid varchar(6),\n" +
+                    "\tuser_type varchar(6),\n" +
+                    "\tblack_list boolean\n" +
+                    ")").executeUpdate();
+            // for load testing
+            IntStream.range(1000, 2000).forEach(value -> executeInsertQuery(session, "ID" + value, UserType.FL, true));
 
-        // for result testing
-        executeInsertQuery(session, "ID2001", UserType.FL, true);
-        executeInsertQuery(session, "ID2002", UserType.FL, false);
-        executeInsertQuery(session, "ID2003", UserType.UL, true);
-        executeInsertQuery(session, "ID2004", UserType.UL, false);
-        tx.commit();
+            // for result testing
+            executeInsertQuery(session, "ID2001", UserType.FL, true);
+            executeInsertQuery(session, "ID2002", UserType.FL, false);
+            executeInsertQuery(session, "ID2003", UserType.UL, true);
+            executeInsertQuery(session, "ID2004", UserType.UL, false);
+            tx.commit();
+        }
     }
 
     private String endpointResponse(String id) throws Exception {

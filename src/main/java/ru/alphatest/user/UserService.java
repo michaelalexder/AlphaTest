@@ -37,20 +37,24 @@ public class UserService {
     }
 
     private User fetchUserWithUserType(String id) {
-        List users = getSession().createNativeQuery("select * from users where id = ?1 and user_type is not null")
-                .setParameter(1, id).list();
-        if (users.isEmpty()) {
-            if (isUserExists(id)) {
-                throw new RuntimeException("User with id " + id + " has no organization type");
+        try (Session session = getSession()) {
+            List users = session.createNativeQuery("select * from users where id = ?1 and user_type is not null")
+                    .setParameter(1, id).list();
+            if (users.isEmpty()) {
+                if (isUserExists(id)) {
+                    throw new RuntimeException("User with id " + id + " has no organization type");
+                }
+                throw new IllegalArgumentException("No user with id " + id + " exists");
             }
-            throw new IllegalArgumentException("No user with id " + id + " exists");
+            return wrapToUser((Object[]) users.get(0));
         }
-        return wrapToUser((Object[]) users.get(0));
     }
 
     private boolean isUserExists(String id) {
-        return ((BigInteger) getSession().createNativeQuery("select count(*) from users where id = ?1")
-                .setParameter(1, id).getSingleResult()).compareTo(BigInteger.ZERO) > 0;
+        try (Session session = getSession()) {
+            return ((BigInteger) session.createNativeQuery("select count(*) from users where id = ?1")
+                    .setParameter(1, id).getSingleResult()).compareTo(BigInteger.ZERO) > 0;
+        }
     }
 
     /**
